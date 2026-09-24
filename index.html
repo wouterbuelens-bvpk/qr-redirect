@@ -28,20 +28,27 @@
     <div id="fout" class="fout" style="display:none;"></div>
   </div>
 
-  <script>
+   <script>
     (function () {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
+
+      let afgehandeld = false;   // voorkomt dat timeout en succes elkaar overschrijven
+      let timeout5s, timeout12s;
 
       if (!id) {
         toonFout("Geen geldige QR-code. Ontbreekt het id-parameter?");
         return;
       }
 
-      // JSONP-callback: Apps Script roept deze functie aan met het resultaat
+      // JSONP-callback: Apps Script roept deze aan met het resultaat
       window.__qrCallback = function (data) {
+        if (afgehandeld) return;
+        afgehandeld = true;
+        clearTimeout(timeout5s);
+        clearTimeout(timeout12s);
+
         if (data && data.url) {
-          // Echte browser-redirect — geen iframe, geen waarschuwing
           window.location.replace(data.url);
         } else {
           toonFout("Deze QR-code is niet meer actief of niet gevonden.");
@@ -54,16 +61,29 @@
         + "?id=" + encodeURIComponent(id)
         + "&format=jsonp&callback=__qrCallback";
       script.onerror = function () {
+        if (afgehandeld) return;
+        afgehandeld = true;
+        clearTimeout(timeout5s);
+        clearTimeout(timeout12s);
         toonFout("Kan de server niet bereiken. Probeer opnieuw.");
       };
       document.body.appendChild(script);
 
-      // Timeout van 5 seconden
-      setTimeout(function () {
-        if (document.getElementById("spinner").style.display !== "none") {
-          toonFout("De server antwoordt niet. Probeer opnieuw.");
+      // Na 5 seconden: enkel een vriendelijke "even geduld"-boodschap
+      timeout5s = setTimeout(function () {
+        if (afgehandeld) return;
+        const boodschap = document.getElementById("boodschap");
+        if (boodschap) {
+          boodschap.innerText = "Even geduld, de server is wakker aan het worden...";
         }
       }, 5000);
+
+      // Na 12 seconden: echte foutmelding (vangnet)
+      timeout12s = setTimeout(function () {
+        if (afgehandeld) return;
+        afgehandeld = true;
+        toonFout("De server antwoordt niet. Probeer opnieuw.");
+      }, 12000);
 
       function toonFout(bericht) {
         document.getElementById("spinner").style.display = "none";
