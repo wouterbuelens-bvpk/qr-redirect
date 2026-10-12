@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+      :root { 
+        --blauw: #008cd3; 
+        --groen: #95c11f; 
+        --grijs: #706f6f; 
+      }
+      body { 
+        font-family: 'Segoe UI', Arial, sans-serif; 
+        background-color: #f4f7f6; 
+        color: var(--grijs); 
+        margin: 0; 
+        padding: 30px 15px; 
+        display: flex; 
+        justify-content: center; 
+      }
+      .container { 
+        background: white; 
+        padding: 30px; 
+        border-radius: 8px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        max-width: 520px; 
+        width: 100%; 
+        border-top: 6px solid var(--blauw); 
+      }
+      .logo { 
+        max-width: 220px; 
+        margin: 0 auto 20px auto; 
+        display: block; 
+      }
+      h2 { 
+        color: var(--blauw); 
+        text-align: center; 
+        margin-top: 0; 
+      }
+      .form-group { margin-bottom: 18px; }
+      label { 
+        display: block; 
+        margin-bottom: 6px; 
+        font-weight: bold; 
+        font-size: 14px; 
+      }
+      input[type="text"], select { 
+        width: 100%; 
+        padding: 10px; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-sizing: border-box; 
+        font-size: 14px; 
+      }
+      .checkbox-group { 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+        margin-bottom: 12px; 
+      }
+      .checkbox-group input { width: 18px; height: 18px; cursor: pointer; }
+      .checkbox-group label { margin-bottom: 0; font-weight: normal; cursor: pointer; }
+      button.primary-btn { 
+        background-color: var(--groen); 
+        color: white; 
+        border: none; 
+        padding: 12px; 
+        width: 100%; 
+        font-size: 16px; 
+        font-weight: bold; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        margin-top: 10px; 
+      }
+      button.primary-btn:hover { background-color: #7da518; }
+      #resultaat { 
+        margin-top: 25px; 
+        padding-top: 20px; 
+        border-top: 2px dashed #eee; 
+        text-align: center; 
+        display: none; 
+      }
+      #qrcode-container { margin: 15px auto; display: inline-block; }
+      .qr-preview-img {
+        width: 200px;
+        height: 200px;
+        border-radius: 6px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #eee;
+      }
+      .qr-preview-img:hover {
+        transform: scale(1.04);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      }
+      .click-hint {
+        font-size: 11px;
+        color: var(--blauw);
+        margin-top: -5px;
+        margin-bottom: 15px;
+        font-style: italic;
+      }
+      .action-btns { 
+        display: flex; 
+        gap: 10px; 
+        justify-content: center; 
+        margin-top: 10px; 
+      }
+      .btn-sub { 
+        padding: 8px 15px; 
+        border: 1px solid var(--blauw); 
+        background: white; 
+        color: var(--blauw); 
+        border-radius: 4px; 
+        cursor: pointer; 
+        font-weight: bold; 
+        text-decoration: none; 
+        font-size: 13px; 
+      }
+      .btn-sub:hover { background: #f0f8ff; }
+      .info-box { 
+        background-color: #eaf4fb; 
+        border-left: 4px solid var(--blauw); 
+        padding: 10px; 
+        font-size: 12px; 
+        margin-top: 20px; 
+        text-align: left; 
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+      <img src="https://lh3.googleusercontent.com/d/1F-Z9qZPejAZiJK-KLCRfvnmLbyu-zZfE" alt="HBO Genk Verpleegkunde Logo" class="logo">
+      
+      <h2>Dynamische QR Generator</h2>
+      
+      <div class="form-group">
+        <label for="url">Uiteindelijke Doel-URL</label>
+        <input type="text" id="url" placeholder="bijv. www.hbogenk.be/opleiding" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="omschrijving">Interne Omschrijving (Bestandsnaam voor Drive)</label>
+        <input type="text" id="omschrijving" placeholder="bijv. Flyer_Opendeurdag_2024" required>
+      </div>
+
+      <div class="form-group">
+        <label for="kleur">Huisstijlkleur QR-code</label>
+        <select id="kleur">
+          <option value="#008cd3">Blauw (#008cd3)</option>
+          <option value="#95c11f">Groen (#95c11f)</option>
+          <option value="#706f6f">Grijs (#706f6f)</option>
+        </select>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="includeLogo" checked>
+        <label for="includeLogo">Plaats HBO Genk logo in het midden</label>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="sendEmail" checked>
+        <label for="sendEmail">Stuur mij een kopie van de QR-code per e-mail</label>
+      </div>
+      
+      <button onclick="verwerkQR()" id="btn" class="primary-btn">Genereer en Bewaar in Drive</button>
+
+      <div id="hidden-qr" style="display:none;"></div>
+
+      <div id="resultaat">
+        <h3 style="color: var(--groen); margin-bottom: 5px;">QR-Code Succesvol Aangemaakt!</h3>
+        <p style="font-size: 13px; margin-top: 0;">Opgeslagen in Drive onder de naam van je omschrijving.</p>
+        
+        <div id="qrcode-container"></div>
+        <div class="click-hint">💡 Tip: Klik op de QR-code om de link in een nieuw tabblad te testen</div>
+        
+        <div class="action-btns">
+          <a id="downloadBtn" download="QR_Code.png" href="#" class="btn-sub">💾 Download PNG</a>
+          <button onclick="kopieerAfbeelding()" class="btn-sub">📋 Kopieer Afbeelding</button>
+        </div>
+
+        <div class="info-box">
+          <strong>Tip voor wijzigen achteraf:</strong> Pas in de Google Sheet simpelweg de URL aan in kolom B bij deze omschrijving.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let finalCanvas = null;
+
+      function toonFout(bericht) {
+        alert(bericht);
+        const btn = document.getElementById('btn');
+        btn.innerText = "Genereer en Bewaar in Drive";
+        btn.disabled = false;
+      }
+
+      function verwerkQR() {
+        const url = document.getElementById('url').value;
+        const omschrijving = document.getElementById('omschrijving').value;
+        const kleur = document.getElementById('kleur').value;
+        const includeLogo = document.getElementById('includeLogo').checked;
+        const sendEmail = document.getElementById('sendEmail').checked;
+        const btn = document.getElementById('btn');
+
+        if(!url || !omschrijving) {
+          alert('Vul aub zowel de URL als de interne omschrijving in.');
+          return;
+        }
+
+        btn.innerText = "Bezig met verwerken (duurt ca. 5 sec)...";
+        btn.disabled = true;
+
+        // Haal de GitHub Pages basis-URL op uit Script Properties
+        google.script.run
+          .withFailureHandler(function(err) { toonFout("Fout bij ophalen redirect-URL: " + err.message); })
+          .withSuccessHandler(function(redirectBase) {
+            
+            // Zorg voor een correcte slash aan het einde
+            if (!redirectBase.endsWith('/')) redirectBase += '/';
+
+            const tempId = Math.random().toString(36).substr(2, 6);
+            const dynamicUrl = redirectBase + "?id=" + tempId;
+
+            tekenQR(dynamicUrl, kleur, includeLogo, function(base64Image) {
+              if(!base64Image) return; 
+
+              google.script.run
+                .withFailureHandler(function(err) { toonFout("Server timeout of netwerkfout: " + err.message); })
+                .withSuccessHandler(function(res) {
+                  if(res.success) {
+                    toonResultaat(res.dynamicUrl, base64Image, omschrijving, url);
+                  } else {
+                    toonFout("Fout op de server bij opslaan/mailen:\n\n" + res.error);
+                  }
+                })
+                .processQrCode(tempId, url, omschrijving, base64Image, sendEmail);
+            });
+            
+          }).getRedirectBase();
+      }
+
+      function tekenQR(text, color, withLogo, callback) {
+        const tempDiv = document.getElementById('hidden-qr');
+        tempDiv.innerHTML = "";
+
+        const qrcode = new QRCode(tempDiv, {
+          text: text, width: 400, height: 400, colorDark: color, colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H
+        });
+
+        setTimeout(() => {
+          const qrCanvas = tempDiv.querySelector('canvas');
+          if (!qrCanvas) {
+            toonFout("Kan geen QR tekenen in deze browser.");
+            callback(null);
+            return;
+          }
+
+          const ctx = qrCanvas.getContext('2d');
+
+          if (withLogo) {
+            const logo = new Image();
+            logo.crossOrigin = "anonymous";
+            logo.onload = function() {
+              const size = qrCanvas.width;
+              const ratio = logo.width / logo.height;
+              const maxLogoWidth = size * 0.28; 
+              
+              let drawWidth, drawHeight;
+              if (ratio > 1) { 
+                drawWidth = maxLogoWidth;
+                drawHeight = maxLogoWidth / ratio;
+              } else { 
+                drawHeight = maxLogoWidth;
+                drawWidth = maxLogoWidth * ratio;
+              }
+              
+              const center = size / 2;
+              const xPos = center - (drawWidth / 2);
+              const yPos = center - (drawHeight / 2);
+
+              const padding = 10;
+              const rectX = xPos - padding;
+              const rectY = yPos - padding;
+              const rectW = drawWidth + (padding * 2);
+              const rectH = drawHeight + (padding * 2);
+              const radius = 6; 
+
+              ctx.fillStyle = "#ffffff";
+              ctx.beginPath();
+              ctx.moveTo(rectX + radius, rectY);
+              ctx.lineTo(rectX + rectW - radius, rectY);
+              ctx.quadraticCurveTo(rectX + rectW, rectY, rectX + rectW, rectY + radius);
+              ctx.lineTo(rectX + rectW, rectY + rectH - radius);
+              ctx.quadraticCurveTo(rectX + rectW, rectY + rectH, rectX + rectW - radius, rectY + rectH);
+              ctx.lineTo(rectX + radius, rectY + rectH);
+              ctx.quadraticCurveTo(rectX, rectY + rectH, rectX, rectY + rectH - radius);
+              ctx.lineTo(rectX, rectY + radius);
+              ctx.quadraticCurveTo(rectX, rectY, rectX + radius, rectY);
+              ctx.closePath();
+              ctx.fill();
+
+              ctx.drawImage(logo, xPos, yPos, drawWidth, drawHeight);
+              
+              try {
+                finalCanvas = qrCanvas;
+                callback(qrCanvas.toDataURL("image/png"));
+              } catch(e) {
+                toonFout("Beveiligingsfout bij het inladen van het logo.\n(Foutcode: Tainted Canvas)");
+                callback(null);
+              }
+            };
+            logo.onerror = function() {
+              toonFout("Kan het logo niet inladen. Probeer de code zonder logo te genereren.");
+              callback(null);
+            }
+            logo.src = "https://lh3.googleusercontent.com/d/1F-Z9qZPejAZiJK-KLCRfvnmLbyu-zZfE";
+          } else {
+            try {
+              finalCanvas = qrCanvas;
+              callback(qrCanvas.toDataURL("image/png"));
+            } catch(e) {
+              toonFout("Fout bij converteren afbeelding: " + e.message);
+              callback(null);
+            }
+          }
+        }, 300);
+      }
+
+      function toonResultaat(dynamicUrl, base64Image, omschrijving, doelUrl) {
+        const container = document.getElementById('qrcode-container');
+        container.innerHTML = "";
+        
+        // Zorg voor een geldige URL met protocol voor de klik-link
+        let clickUrl = doelUrl.trim();
+        if (!clickUrl.startsWith('http://') && !clickUrl.startsWith('https://')) {
+          clickUrl = 'https://' + clickUrl;
+        }
+
+        const linkWrapper = document.createElement('a');
+        linkWrapper.href = clickUrl;
+        linkWrapper.target = "_blank";
+        linkWrapper.title = "Klik om " + clickUrl + " te openen in een nieuw tabblad";
+
+        const img = document.createElement('img');
+        img.src = base64Image;
+        img.className = "qr-preview-img";
+
+        linkWrapper.appendChild(img);
+        container.appendChild(linkWrapper);
+
+        const downloadBtn = document.getElementById('downloadBtn');
+        downloadBtn.href = base64Image;
+        downloadBtn.download = omschrijving.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".png";
+
+        document.getElementById('resultaat').style.display = 'block';
+        
+        const btn = document.getElementById('btn');
+        btn.innerText = "Genereer Nieuwe QR-Code";
+        btn.disabled = false;
+      }
+
+      function kopieerAfbeelding() {
+        if (!finalCanvas) return;
+        finalCanvas.toBlob(blob => {
+          try {
+            navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            alert('QR-code gekopieerd naar je klembord!');
+          } catch (err) {
+            alert('Kopiëren mislukt in deze browser. Gebruik de Download-knop.');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
