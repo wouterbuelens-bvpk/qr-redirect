@@ -22,35 +22,29 @@
   </div>
 
   <script>
-    // 1. Haal de 'id' op uit de URL (bijv. ?id=oupygm)
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
 
-    // 2. Jouw Apps Script Web App URL
+    // BELANGRIJK: Gebruik hier de URL van je Web App (zie stap 2 hieronder)
     const appsScriptUrl = "https://script.google.com/a/macros/verpleegopleiding-genk.be/s/AKfycbwZ6EaefW6xzzrv2F6miqcWXQNaI5h3_gWlAgbHLR_aSuYV5ilRyT_4XvAo8b-W35KtFg/exec";
 
     if (id) {
-      // 3. Bouw de JSONP-URL naar je Apps Script
       const jsonpUrl = appsScriptUrl + "?id=" + encodeURIComponent(id) + "&format=jsonp&callback=handleRedirect";
 
-      // 4. Laad het script (dit omzeilt CORS-beveiliging van de browser)
       const script = document.createElement('script');
       script.src = jsonpUrl;
       script.onerror = function() {
-        showError("Fout bij het ophalen van de bestemming. Controleer je internetverbinding.");
+        showError("Fout bij het ophalen van de bestemming. Controleer je internetverbinding of de Apps Script URL.");
       };
       document.body.appendChild(script);
     } else {
       showError("Fout: Geen id-parameter gevonden in de link. Scan de QR-code opnieuw.");
     }
 
-    // 5. Deze functie wordt automatisch aangeroepen door Apps Script als het klaar is
     function handleRedirect(data) {
       if (data && data.url) {
         document.getElementById('loader').style.display = 'none';
         document.getElementById('message').innerText = "Gevonden! Je wordt nu doorgestuurd...";
-        
-        // De daadwerkelijke redirect naar bijv. sporza.be
         window.location.replace(data.url);
       } else if (data && data.error) {
         showError("Fout: De link is niet gevonden of niet meer actief in de spreadsheet.");
