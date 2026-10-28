@@ -22,35 +22,54 @@
   </div>
 
   <script>
+    // Haal de 'id' op uit de URL (bijv. ?id=oupygm)
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
 
-    // BELANGRIJK: Gebruik hier de URL van je Web App (zie stap 2 hieronder)
-    const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwZ6EaefW6xzzrv2F6miqcWXQNaI5h3_gWlAgbHLR_aSuYV5ilRyT_4XvAo8b-W35KtFg/exec";
+    // Jouw gepubliceerde TSV-link
+    const tsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQy4sRAPxk-jbpqkNzfDdmse6J6OZ9i4F5a1GegYV2a6zsxzx7Gxtfkjxe4wDwch5vUMwpr3nuS5rdu/pub?gid=0&single=true&output=tsv";
 
     if (id) {
-      const jsonpUrl = appsScriptUrl + "?id=" + encodeURIComponent(id) + "&format=jsonp&callback=handleRedirect";
+      // Haal de spreadsheet op als platte tekst
+      fetch(tsvUrl)
+        .then(response => response.text())
+        .then(tsvText => {
+          // Splits de tekst in losse regels
+          const rows = tsvText.split('\n');
+          
+          for (let i = 1; i < rows.length; i++) { // Start bij 1 om de header over te slaan
+            // Splits de regel op tabs (TSV)
+            const cols = rows[i].split('\t');
+            
+            // Controleer of de ID overeenkomt (negeer eventuele spaties)
+            if (cols[0] && cols[0].trim() === id) {
+              let targetUrl = cols[1] ? cols[1].trim() : "";
+              
+              // Verwijder eventuele aanhalingstekens die Google Sheets toevoegt
+              targetUrl = targetUrl.replace(/^"|"$/g, '');
 
-      const script = document.createElement('script');
-      script.src = jsonpUrl;
-      script.onerror = function() {
-        showError("Fout bij het ophalen van de bestemming. Controleer je internetverbinding of de Apps Script URL.");
-      };
-      document.body.appendChild(script);
+              if (targetUrl) {
+                // Voeg https:// toe als het ontbreekt
+                if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+                  targetUrl = 'https://' + targetUrl;
+                }
+                
+                // Verberg de loader en stuur de gebruiker direct door!
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('message').innerText = "Gevonden! Je wordt nu doorgestuurd...";
+                window.location.replace(targetUrl);
+                return;
+              }
+            }
+          }
+          // Als de loop klaar is en er is niks gevonden:
+          showError("Fout: De link is niet gevonden of niet meer actief in de spreadsheet.");
+        })
+        .catch(err => {
+          showError("Fout bij het ophalen van de gegevens. Controleer je internetverbinding.");
+        });
     } else {
       showError("Fout: Geen id-parameter gevonden in de link. Scan de QR-code opnieuw.");
-    }
-
-    function handleRedirect(data) {
-      if (data && data.url) {
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('message').innerText = "Gevonden! Je wordt nu doorgestuurd...";
-        window.location.replace(data.url);
-      } else if (data && data.error) {
-        showError("Fout: De link is niet gevonden of niet meer actief in de spreadsheet.");
-      } else {
-        showError("Fout: Onbekend antwoord van de server.");
-      }
     }
 
     function showError(msg) {
