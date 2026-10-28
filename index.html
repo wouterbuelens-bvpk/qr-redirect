@@ -26,7 +26,7 @@
     const id = urlParams.get('id');
 
     // BELANGRIJK: Gebruik hier de URL van je Web App (zie stap 2 hieronder)
-    const appsScriptUrl = "https://script.google.com/a/macros/verpleegopleiding-genk.be/s/AKfycbwZ6EaefW6xzzrv2F6miqcWXQNaI5h3_gWlAgbHLR_aSuYV5ilRyT_4XvAo8b-W35KtFg/exec";
+    const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwZ6EaefW6xzzrv2F6miqcWXQNaI5h3_gWlAgbHLR_aSuYV5ilRyT_4XvAo8b-W35KtFg/exec";
 
     if (id) {
       const jsonpUrl = appsScriptUrl + "?id=" + encodeURIComponent(id) + "&format=jsonp&callback=handleRedirect";
